@@ -29,15 +29,15 @@ class SqPackPlatformId(enum.IntEnum):
 
 
 class SqPackFileType(enum.IntEnum):
-    Empty = 1,
-    Standard = 2,
-    Model = 3,
-    Texture = 4,
+    Empty = 1
+    Standard = 2
+    Model = 3
+    Texture = 4
 
 
 class DatBlockType(enum.IntEnum):
-    Compressed = 4713,
-    Uncompressed = 32000,
+    Compressed = 4713
+    Uncompressed = 32000
 
 
 class SqPackFileInfo:
@@ -45,7 +45,10 @@ class SqPackFileInfo:
         self.header_size = int.from_bytes(bytes[0:4], byteorder='little')
         self.type = SqPackFileType(int.from_bytes(bytes[4:8], byteorder='little'))
         self.raw_file_size = int.from_bytes(bytes[8:12], byteorder='little')
-        self.unknown = [int.from_bytes(bytes[12:16], byteorder='little'), int.from_bytes(bytes[16:20], byteorder='little')]
+        self.unknown = [
+            int.from_bytes(bytes[12:16], byteorder='little'),
+            int.from_bytes(bytes[16:20], byteorder='little'),
+        ]
         self.number_of_blocks = int.from_bytes(bytes[20:24], byteorder='little')
         self.offset = offset
 
@@ -73,7 +76,7 @@ class SqPackHeader:
         self.magic = file.read(8)
         self.platform_id = SqPackPlatformId(int.from_bytes(file.read(1), byteorder='little'))
         self.unknown = file.read(3)
-        if (self.platform_id != SqPackPlatformId.PS3):
+        if self.platform_id != SqPackPlatformId.PS3:
             self.size = int.from_bytes(file.read(4), byteorder='little')
             self.version = int.from_bytes(file.read(4), byteorder='little')
             self.type = int.from_bytes(file.read(4), byteorder='little')
@@ -167,30 +170,29 @@ class SqPack:
         file_info_bytes = self.file.read(24)
         file_info = SqPackFileInfo(file_info_bytes, offset)
         data: list[bytes] = []
-        match file_info.type:
-            case SqPackFileType.Empty:
-                raise Exception('File located at 0x' + hex(offset) + ' is empty.')
-            case SqPackFileType.Standard:
-                data = self.read_standard_file(file_info)
-            case _:
-                raise Exception('Type: ' + str(file_info.type) + ' not implemented.')
+        if file_info.type == SqPackFileType.Empty:
+            raise Exception('File located at 0x' + hex(offset) + ' is empty.')
+        elif file_info.type == SqPackFileType.Standard:
+            data = self.read_standard_file(file_info)
+        else:
+            raise Exception('Type: ' + str(file_info.type) + ' not implemented.')
         return data
 
     def read_standard_file(self, file_info: SqPackFileInfo):
-        block_bytes = self.file.read(file_info.number_of_blocks*8)
+        block_bytes = self.file.read(file_info.number_of_blocks * 8)
         data: list[bytes] = []
         for i in range(file_info.number_of_blocks):
-            block = DatStdFileBlockInfos(block_bytes[i*8:i*8+8])
+            block = DatStdFileBlockInfos(block_bytes[i * 8 : i * 8 + 8])
             self.file.seek(file_info.offset + file_info.header_size + block.offset)
             block_header = DatBlockHeader(self.file.read(16))
             print(block_header)
-            if(block_header.dat_block_type == 32000):
+            if block_header.dat_block_type == 32000:
                 data.append(self.file.read(block_header.block_data_size))
             else:
                 data.append(zlib.decompress(self.file.read(block_header.block_data_size), wbits=-15))
 
         return data
-    
+
     def __str__(self):
         return f'''Path: {os.path.join(self.root, 'sqpack', self.path)} Header: {self.header}'''
 
@@ -205,12 +207,12 @@ class Repository:
         self.get_expansion_id()
 
     def get_expansion_id(self):
-        if (self.name.startswith('ex')):
+        if self.name.startswith('ex'):
             self.expansion_id = int(self.name.removeprefix('ex'))
 
     def parse_version(self):
         versionPath = ""
-        if (self.name == 'ffxiv'):
+        if self.name == 'ffxiv':
             versionPath = os.path.join(self.root, 'ffxivgame.ver')
         else:
             versionPath = os.path.join(self.root, 'sqpack', self.name, self.name + '.ver')
@@ -234,7 +236,7 @@ class Repository:
         id = index.data_file_id()
         offset = index.data_file_offset()
         return SqPack(self.root, sqpack.data_files[id]).read_file(offset)
-    
+
     def __str__(self):
         return f'''Repository: {self.name} ({self.version}) - {self.expansion_id}'''
 
@@ -246,7 +248,7 @@ class GameData:
         self.setup()
 
     def get_repo_index(self, folder: str):
-        if (folder == 'ffxiv'):
+        if folder == 'ffxiv':
             return 0
         else:
             return int(folder.removeprefix('ex'))
@@ -284,7 +286,7 @@ class ExcelListFile:
             if linearr[1] == '-1':
                 continue
             self.dict[int(linearr[1])] = linearr[0]
-        
+
 
 class ParsedFileName:
     def __init__(self, path: str):
@@ -317,10 +319,30 @@ class Crc32:
         size = len(value)
         crc_local = 4294967295 ^ 0
         while size >= 16:
-            a = self.table[(3*256) + value[start + 12]] ^ self.table[(2*256) + value[start + 13]] ^ self.table[(1*256) + value[start + 14]] ^ self.table[(0*256) + value[start + 15]]
-            b = self.table[(7*256) + value[start + 8]] ^ self.table[(6*256) + value[start + 9]] ^ self.table[(5*256) + value[start + 10]] ^ self.table[(4*256) + value[start + 11]]
-            c = self.table[(11*256) + value[start + 4]] ^ self.table[(10*256) + value[start + 5]] ^ self.table[(9*256) + value[start + 6]] ^ self.table[(8*256) + value[start + 7]]
-            d = self.table[(15*256) + value[start + 0]] ^ self.table[(14*256) + value[start + 1]] ^ self.table[(13*256) + value[start + 2]] ^ self.table[(12*256) + value[start + 3]]
+            a = (
+                self.table[(3 * 256) + value[start + 12]]
+                ^ self.table[(2 * 256) + value[start + 13]]
+                ^ self.table[(1 * 256) + value[start + 14]]
+                ^ self.table[(0 * 256) + value[start + 15]]
+            )
+            b = (
+                self.table[(7 * 256) + value[start + 8]]
+                ^ self.table[(6 * 256) + value[start + 9]]
+                ^ self.table[(5 * 256) + value[start + 10]]
+                ^ self.table[(4 * 256) + value[start + 11]]
+            )
+            c = (
+                self.table[(11 * 256) + value[start + 4]]
+                ^ self.table[(10 * 256) + value[start + 5]]
+                ^ self.table[(9 * 256) + value[start + 6]]
+                ^ self.table[(8 * 256) + value[start + 7]]
+            )
+            d = (
+                self.table[(15 * 256) + value[start + 0]]
+                ^ self.table[(14 * 256) + value[start + 1]]
+                ^ self.table[(13 * 256) + value[start + 2]]
+                ^ self.table[(12 * 256) + value[start + 3]]
+            )
             crc_local = d ^ c ^ b ^ a
             start += 16
             size -= 16
@@ -351,13 +373,13 @@ crc = Crc32()
 
 def get_game_data_folders(root: str):
     for folder in os.listdir(os.path.join(root, 'sqpack')):
-        if (os.path.isdir(os.path.join(root, 'sqpack', folder))):
+        if os.path.isdir(os.path.join(root, 'sqpack', folder)):
             yield folder
 
 
 def get_files(path):
     files: list[bytes] = []
-    for (dir_path, dir_names, file_names) in os.walk(path):
+    for dir_path, dir_names, file_names in os.walk(path):
         files.extend(os.path.join(dir_path, file) for file in file_names)
 
     return files
@@ -366,17 +388,17 @@ def get_files(path):
 def get_sqpack_files(root: str, path: str):
     for file in get_files(os.path.join(root, 'sqpack', path)):
         ext = file.split('.')[-1]
-        if (ext.startswith('dat')):
+        if ext.startswith('dat'):
             yield file
 
 
 def get_sqpack_index(root: str, path: str):
     for file in get_files(os.path.join(root, 'sqpack', path)):
-        if (file.endswith('.index')):
+        if file.endswith('.index'):
             yield file
 
 
 def get_sqpack_index2(root: str, path: str):
     for file in get_files(os.path.join(root, 'sqpack', path)):
-        if (file.endswith('.index2')):
+        if file.endswith('.index2'):
             yield file
