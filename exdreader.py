@@ -87,6 +87,7 @@ class SqPackHeader:
     def __str__(self):
         return f'Magic: {self.magic} Platform: {self.platform_id} Size: {self.size} Version: {self.version} Type: {self.type}'
 
+
 class SqPackIndexHeader:
     def __init__(self, bytes: bytes):
         self.size = int.from_bytes(bytes[0:4], byteorder='little')
