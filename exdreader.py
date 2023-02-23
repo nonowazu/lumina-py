@@ -2,6 +2,7 @@ import os
 from io import BufferedReader
 import enum
 import zlib
+from typing import List
 
 
 class SqPackCatergories(enum.IntEnum):
@@ -68,7 +69,7 @@ class DatBlockHeader:
         self.dat_block_type = int.from_bytes(bytes[12:16], byteorder='little')
 
     def __str__(self):
-        return f'''Size: {self.size} Unknown1: {self.unknown1} DatBlockType: {self.dat_block_type} BlockDataSize: {self.block_data_size}'''
+        return f'Size: {self.size} Unknown1: {self.unknown1} DatBlockType: {self.dat_block_type} BlockDataSize: {self.block_data_size}'
 
 
 class SqPackHeader:
@@ -84,8 +85,7 @@ class SqPackHeader:
             raise Exception('PS3 is not supported')
 
     def __str__(self):
-        return f'''Magic: {self.magic} Platform: {self.platform_id} Size: {self.size} Version: {self.version} Type: {self.type}'''
-
+        return f'Magic: {self.magic} Platform: {self.platform_id} Size: {self.size} Version: {self.version} Type: {self.type}'
 
 class SqPackIndexHeader:
     def __init__(self, bytes: bytes):
@@ -109,7 +109,7 @@ class SqPackIndexHeader:
         self.hash = bytes[960:1024]
 
     def __str__(self):
-        return f'''Size: {self.size} Version: {self.version} Index Data Offset: {self.index_data_offset} Index Data Size: {self.index_data_size} Index Data Hash: {self.index_data_hash} Number Of Data File: {self.number_of_data_file} Synonym Data Offset: {self.synonym_data_offset} Synonym Data Size: {self.synonym_data_size} Synonym Data Hash: {self.synonym_data_hash} Empty Block Data Offset: {self.empty_block_data_offset} Empty Block Data Size: {self.empty_block_data_size} Empty Block Data Hash: {self.empty_block_data_hash} Dir Index Data Offset: {self.dir_index_data_offset} Dir Index Data Size: {self.dir_index_data_size} Dir Index Data Hash: {self.dir_index_data_hash} Index Type: {self.index_type} Reserved: {self.reserved} Hash: {self.hash}'''
+        return f'Size: {self.size} Version: {self.version} Index Data Offset: {self.index_data_offset} Index Data Size: {self.index_data_size} Index Data Hash: {self.index_data_hash} Number Of Data File: {self.number_of_data_file} Synonym Data Offset: {self.synonym_data_offset} Synonym Data Size: {self.synonym_data_size} Synonym Data Hash: {self.synonym_data_hash} Empty Block Data Offset: {self.empty_block_data_offset} Empty Block Data Size: {self.empty_block_data_size} Empty Block Data Hash: {self.empty_block_data_hash} Dir Index Data Offset: {self.dir_index_data_offset} Dir Index Data Size: {self.dir_index_data_size} Dir Index Data Hash: {self.dir_index_data_hash} Index Type: {self.index_type} Reserved: {self.reserved} Hash: {self.hash}'
 
 
 class SqPackIndexHashTable:
@@ -128,7 +128,7 @@ class SqPackIndexHashTable:
         return (self.data & ~0xF) * 0x08
 
     def __str__(self):
-        return f'''Hash: {self.hash} Data: {self.data} Padding: {self.padding} Is Synonym: {self.is_synonym()} Data File ID: {self.data_file_id()} Data File Offset: {self.data_file_offset()}'''
+        return f'Hash: {self.hash} Data: {self.data} Padding: {self.padding} Is Synonym: {self.is_synonym()} Data File ID: {self.data_file_id()} Data File Offset: {self.data_file_offset()}'
 
 
 class SqPack:
@@ -156,7 +156,7 @@ class SqPack:
     def discover_data_files(self):
         self.load_index_header()
         self.load_hash_table()
-        self.data_files: list[str] = []
+        self.data_files: List[str] = []
         for file in get_sqpack_files(self.root, self.path.rsplit('\\', 1)[0].split('\\')[-1]):
             for i in range(0, self.index_header.number_of_data_file):
                 name = self.path.rsplit('.', 1)[0] + '.dat' + str(i)
@@ -169,7 +169,7 @@ class SqPack:
         self.file.seek(offset)
         file_info_bytes = self.file.read(24)
         file_info = SqPackFileInfo(file_info_bytes, offset)
-        data: list[bytes] = []
+        data: List[bytes] = []
         if file_info.type == SqPackFileType.Empty:
             raise Exception('File located at 0x' + hex(offset) + ' is empty.')
         elif file_info.type == SqPackFileType.Standard:
@@ -180,7 +180,7 @@ class SqPack:
 
     def read_standard_file(self, file_info: SqPackFileInfo):
         block_bytes = self.file.read(file_info.number_of_blocks * 8)
-        data: list[bytes] = []
+        data: List[bytes] = []
         for i in range(file_info.number_of_blocks):
             block = DatStdFileBlockInfos(block_bytes[i * 8 : i * 8 + 8])
             self.file.seek(file_info.offset + file_info.header_size + block.offset)
@@ -194,14 +194,14 @@ class SqPack:
         return data
 
     def __str__(self):
-        return f'''Path: {os.path.join(self.root, 'sqpack', self.path)} Header: {self.header}'''
+        return f'Path: {os.path.join(self.root, "sqpack", self.path)} Header: {self.header}'
 
 
 class Repository:
     def __init__(self, name: str, root: str):
         self.root = root
         self.name = name
-        self.sqpacks: list[SqPack] = []
+        self.sqpacks: List[SqPack] = []
         self.index: dict[int, tuple[SqPackIndexHashTable, SqPack]] = {}
         self.expansion_id = 0
         self.get_expansion_id()
@@ -238,7 +238,7 @@ class Repository:
         return SqPack(self.root, sqpack.data_files[id]).read_file(offset)
 
     def __str__(self):
-        return f'''Repository: {self.name} ({self.version}) - {self.expansion_id}'''
+        return f'Repository: {self.name} ({self.version}) - {self.expansion_id}'
 
 
 class GameData:
@@ -266,11 +266,11 @@ class GameData:
         return self.repositories[self.get_repo_index(file.repo)].get_file(file.index)
 
     def __str__(self):
-        return f'''Repositories: {self.repositories}'''
+        return f'Repositories: {self.repositories}'
 
 
 class ExcelListFile:
-    def __init__(self, data: list[bytes]):
+    def __init__(self, data: List[bytes]):
         self.data = b''.join(data).split('\r\n'.encode('utf-8'))
         self.parse()
 
@@ -378,7 +378,7 @@ def get_game_data_folders(root: str):
 
 
 def get_files(path):
-    files: list[bytes] = []
+    files: List[bytes] = []
     for dir_path, dir_names, file_names in os.walk(path):
         files.extend(os.path.join(dir_path, file) for file in file_names)
 

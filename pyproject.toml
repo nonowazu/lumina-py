@@ -5,3 +5,6 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 120
 skip-string-normalization = true
+
+[tool.pylint.messages_control]
+max-line-length = 120
