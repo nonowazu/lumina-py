@@ -41,7 +41,7 @@ class DatBlockType(enum.IntEnum):
     UNCOMPRESSED = 32000
 
 
-class SqPackFileInfo: # pylint: disable=too-few-public-methods
+class SqPackFileInfo:  # pylint: disable=too-few-public-methods
     def __init__(self, data: bytes, offset: int):
         self.header_size = int.from_bytes(data[0:4], byteorder='little')
         self.type = SqPackFileType(int.from_bytes(data[4:8], byteorder='little'))
@@ -54,14 +54,14 @@ class SqPackFileInfo: # pylint: disable=too-few-public-methods
         self.offset = offset
 
 
-class DatStdFileBlockInfos: # pylint: disable=too-few-public-methods
+class DatStdFileBlockInfos:  # pylint: disable=too-few-public-methods
     def __init__(self, data: bytes):
         self.offset = int.from_bytes(data[0:4], byteorder='little')
         self.compressed_size = int.from_bytes(data[4:6], byteorder='little')
         self.uncompressed_size = int.from_bytes(data[6:8], byteorder='little')
 
 
-class DatBlockHeader: # pylint: disable=too-few-public-methods
+class DatBlockHeader:  # pylint: disable=too-few-public-methods
     def __init__(self, data: bytes):
         self.size = int.from_bytes(data[0:4], byteorder='little')
         self.unknown1 = int.from_bytes(data[4:8], byteorder='little')
@@ -69,13 +69,17 @@ class DatBlockHeader: # pylint: disable=too-few-public-methods
         self.dat_block_type = int.from_bytes(data[12:16], byteorder='little')
 
     def __str__(self):
-        return f'Size: {self.size} Unknown1: {self.unknown1} ' \
-               f'DatBlockType: {self.dat_block_type} BlockDataSize: {self.block_data_size}'
+        return (
+            f'Size: {self.size} Unknown1: {self.unknown1} '
+            f'DatBlockType: {self.dat_block_type} BlockDataSize: {self.block_data_size}'
+        )
+
 
 class HeaderNotSupported(Exception):
     pass
 
-class SqPackHeader: # pylint: disable=too-few-public-methods
+
+class SqPackHeader:  # pylint: disable=too-few-public-methods
     def __init__(self, file: BufferedReader):
         self.magic = file.read(8)
         self.platform_id = SqPackPlatformId(int.from_bytes(file.read(1), byteorder='little'))
@@ -88,12 +92,14 @@ class SqPackHeader: # pylint: disable=too-few-public-methods
             raise HeaderNotSupported('PS3 is not supported')
 
     def __str__(self):
-        return f'Magic: {self.magic} Platform: {self.platform_id} ' \
-               f'Size: {self.size} Version: {self.version} Type: {self.type}'
+        return (
+            f'Magic: {self.magic} Platform: {self.platform_id} '
+            f'Size: {self.size} Version: {self.version} Type: {self.type}'
+        )
 
 
 # Consider replacing with a dictionary
-class SqPackIndexHeader: # pylint: disable=too-few-public-methods,too-many-instance-attributes
+class SqPackIndexHeader:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     def __init__(self, data: bytes):
         self.size = int.from_bytes(data[0:4], byteorder='little')
         self.version = int.from_bytes(data[4:8], byteorder='little')
@@ -115,17 +121,19 @@ class SqPackIndexHeader: # pylint: disable=too-few-public-methods,too-many-insta
         self.hash = data[960:1024]
 
     def __str__(self):
-        return f'Size: {self.size} Version: {self.version} '\
-               f'Index Data Offset: {self.index_data_offset} Index Data Size: {self.index_data_size} ' \
-               f'Index Data Hash: {self.index_data_hash} Number Of Data File: {self.number_of_data_file} ' \
-               f'Synonym Data Offset: {self.synonym_data_offset} Synonym Data Size: {self.synonym_data_size} ' \
-               f'Synonym Data Hash: {self.synonym_data_hash} Empty Block Data Offset: {self.empty_block_data_offset} ' \
-               f'Empty Block Data Size: {self.empty_block_data_size} ' \
-               f'Empty Block Data Hash: {self.empty_block_data_hash} ' \
-               f'Dir Index Data Offset: {self.dir_index_data_offset} ' \
-               f'Dir Index Data Size: {self.dir_index_data_size} ' \
-               f'Dir Index Data Hash: {self.dir_index_data_hash} ' \
-               f'Index Type: {self.index_type} Reserved: {self.reserved} Hash: {self.hash}'
+        return (
+            f'Size: {self.size} Version: {self.version} '
+            f'Index Data Offset: {self.index_data_offset} Index Data Size: {self.index_data_size} '
+            f'Index Data Hash: {self.index_data_hash} Number Of Data File: {self.number_of_data_file} '
+            f'Synonym Data Offset: {self.synonym_data_offset} Synonym Data Size: {self.synonym_data_size} '
+            f'Synonym Data Hash: {self.synonym_data_hash} Empty Block Data Offset: {self.empty_block_data_offset} '
+            f'Empty Block Data Size: {self.empty_block_data_size} '
+            f'Empty Block Data Hash: {self.empty_block_data_hash} '
+            f'Dir Index Data Offset: {self.dir_index_data_offset} '
+            f'Dir Index Data Size: {self.dir_index_data_size} '
+            f'Dir Index Data Hash: {self.dir_index_data_hash} '
+            f'Index Type: {self.index_type} Reserved: {self.reserved} Hash: {self.hash}'
+        )
 
 
 class SqPackIndexHashTable:
@@ -144,24 +152,29 @@ class SqPackIndexHashTable:
         return (self.data & ~0xF) * 0x08
 
     def __str__(self):
-        return f'Hash: {self.hash_} Data: {self.data} Padding: {self.padding} Is Synonym: {self.is_synonym()} '\
-               f'Data File ID: {self.data_file_id()} Data File Offset: {self.data_file_offset()}'
+        return (
+            f'Hash: {self.hash_} Data: {self.data} Padding: {self.padding} Is Synonym: {self.is_synonym()} '
+            f'Data File ID: {self.data_file_id()} Data File Offset: {self.data_file_offset()}'
+        )
 
 
 class NotADataFile(Exception):
     pass
 
+
 class DataFileEmpty(Exception):
     pass
 
+
 class SqPackTypeNotImplemented(Exception):
     pass
+
 
 class SqPack:
     def __init__(self, root: str, path: str):
         self.root = root
         self.path = path
-        self.file = open(path, 'rb') # pylint: disable=R1732
+        self.file = open(path, 'rb')  # pylint: disable=R1732
         self.header = SqPackHeader(self.file)
         self.index_header = None
         self.hash_table = None
@@ -288,7 +301,7 @@ class GameData:
         for folder in get_game_data_folders(self.root):
             self.repositories[self.get_repo_index(folder)] = Repository(folder, self.root)
 
-        for folder in self.repositories: # pylint: disable=C0206
+        for folder in self.repositories:  # pylint: disable=C0206
             repo = self.repositories[folder]
             repo.parse_version()
             repo.setup_indexes()
@@ -322,7 +335,7 @@ class ExcelListFile:
         return '<ExcelListFile>'
 
 
-class ParsedFileName: # pylint: disable=too-few-public-methods
+class ParsedFileName:  # pylint: disable=too-few-public-methods
     def __init__(self, path: str):
         self.path = path.lower().strip()
         parts = self.path.split('/')
