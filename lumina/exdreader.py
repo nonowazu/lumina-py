@@ -4,6 +4,11 @@ import enum
 import zlib
 from typing import List, Dict, Tuple
 
+def removeprefix(string: str, prefix: str, /) -> str:
+    if string.startswith(prefix):
+        return string[len(prefix):]
+    else
+        return string[:]
 
 class SqPackCatergories(enum.IntEnum):
     COMMON = 0x0
@@ -253,7 +258,7 @@ class Repository:
 
     def get_expansion_id(self):
         if self.name.startswith('ex'):
-            self.expansion_id = int(self.name.removeprefix('ex'))
+            self.expansion_id = int(removeprefix(name, 'ex'))
 
     def parse_version(self):
         version_path = ""
@@ -295,7 +300,7 @@ class GameData:
     def get_repo_index(self, folder: str):
         if folder == 'ffxiv':
             return 0
-        return int(folder.removeprefix('ex'))
+        return int(removeprefix(folder, 'ex'))
 
     def setup(self):
         for folder in get_game_data_folders(self.root):
