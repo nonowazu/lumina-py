@@ -4,10 +4,10 @@ import enum
 import zlib
 from typing import List, Dict, Tuple
 
-def removeprefix(string: str, prefix: str, /) -> str:
+def removeprefix(string: str, prefix: str) -> str:
     if string.startswith(prefix):
         return string[len(prefix):]
-    else
+    else:
         return string[:]
 
 class SqPackCatergories(enum.IntEnum):
@@ -258,7 +258,7 @@ class Repository:
 
     def get_expansion_id(self):
         if self.name.startswith('ex'):
-            self.expansion_id = int(removeprefix(name, 'ex'))
+            self.expansion_id = int(removeprefix(self.name, 'ex'))
 
     def parse_version(self):
         version_path = ""
