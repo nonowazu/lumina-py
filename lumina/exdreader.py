@@ -4,11 +4,13 @@ import enum
 import zlib
 from typing import List, Dict, Tuple
 
+
 def removeprefix(string: str, prefix: str) -> str:
     if string.startswith(prefix):
-        return string[len(prefix):]
+        return string[len(prefix) :]
     else:
         return string[:]
+
 
 class SqPackCatergories(enum.IntEnum):
     COMMON = 0x0
