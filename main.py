@@ -1,4 +1,4 @@
-from exdreader import GameData, ParsedFileName, ExcelListFile
+from lumina.exdreader import GameData, ParsedFileName, ExcelListFile
 
 
 def main():

@@ -4,6 +4,8 @@ import enum
 import zlib
 from typing import List, Dict, Tuple
 
+from lumina.data.sqpack import Header as SqPackHeader, IndexHeader as SqPackIndexHeader
+
 
 def removeprefix(string: str, prefix: str) -> str:
     if string.startswith(prefix):
@@ -28,12 +30,6 @@ class SqPackCatergories(enum.IntEnum):
     MUSIC = 0xC
     SQPACK_TEST = 0x12
     DEBUG = 0x13
-
-
-class SqPackPlatformId(enum.IntEnum):
-    WIN32 = 0x0
-    PS3 = 0x1
-    PS4 = 0x2
 
 
 class SqPackFileType(enum.IntEnum):
@@ -84,63 +80,6 @@ class DatBlockHeader:  # pylint: disable=too-few-public-methods
 
 class HeaderNotSupported(Exception):
     pass
-
-
-class SqPackHeader:  # pylint: disable=too-few-public-methods
-    def __init__(self, file: BufferedReader):
-        self.magic = file.read(8)
-        self.platform_id = SqPackPlatformId(int.from_bytes(file.read(1), byteorder='little'))
-        self.unknown = file.read(3)
-        if self.platform_id != SqPackPlatformId.PS3:
-            self.size = int.from_bytes(file.read(4), byteorder='little')
-            self.version = int.from_bytes(file.read(4), byteorder='little')
-            self.type = int.from_bytes(file.read(4), byteorder='little')
-        else:
-            raise HeaderNotSupported('PS3 is not supported')
-
-    def __str__(self):
-        return (
-            f'Magic: {self.magic} Platform: {self.platform_id} '
-            f'Size: {self.size} Version: {self.version} Type: {self.type}'
-        )
-
-
-# Consider replacing with a dictionary
-class SqPackIndexHeader:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
-    def __init__(self, data: bytes):
-        self.size = int.from_bytes(data[0:4], byteorder='little')
-        self.version = int.from_bytes(data[4:8], byteorder='little')
-        self.index_data_offset = int.from_bytes(data[8:12], byteorder='little')
-        self.index_data_size = int.from_bytes(data[12:16], byteorder='little')
-        self.index_data_hash = data[16:80]
-        self.number_of_data_file = int.from_bytes(data[80:84], byteorder='little')
-        self.synonym_data_offset = int.from_bytes(data[84:88], byteorder='little')
-        self.synonym_data_size = int.from_bytes(data[88:92], byteorder='little')
-        self.synonym_data_hash = data[92:156]
-        self.empty_block_data_offset = int.from_bytes(data[156:160], byteorder='little')
-        self.empty_block_data_size = int.from_bytes(data[160:164], byteorder='little')
-        self.empty_block_data_hash = data[164:228]
-        self.dir_index_data_offset = int.from_bytes(data[228:232], byteorder='little')
-        self.dir_index_data_size = int.from_bytes(data[232:236], byteorder='little')
-        self.dir_index_data_hash = data[236:300]
-        self.index_type = int.from_bytes(data[300:304], byteorder='little')
-        self.reserved = data[304:960]
-        self.hash = data[960:1024]
-
-    def __str__(self):
-        return (
-            f'Size: {self.size} Version: {self.version} '
-            f'Index Data Offset: {self.index_data_offset} Index Data Size: {self.index_data_size} '
-            f'Index Data Hash: {self.index_data_hash} Number Of Data File: {self.number_of_data_file} '
-            f'Synonym Data Offset: {self.synonym_data_offset} Synonym Data Size: {self.synonym_data_size} '
-            f'Synonym Data Hash: {self.synonym_data_hash} Empty Block Data Offset: {self.empty_block_data_offset} '
-            f'Empty Block Data Size: {self.empty_block_data_size} '
-            f'Empty Block Data Hash: {self.empty_block_data_hash} '
-            f'Dir Index Data Offset: {self.dir_index_data_offset} '
-            f'Dir Index Data Size: {self.dir_index_data_size} '
-            f'Dir Index Data Hash: {self.dir_index_data_hash} '
-            f'Index Type: {self.index_type} Reserved: {self.reserved} Hash: {self.hash}'
-        )
 
 
 class SqPackIndexHashTable:
