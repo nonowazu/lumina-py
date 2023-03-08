@@ -4,7 +4,7 @@ import enum
 import zlib
 from typing import List, Dict, Tuple
 
-from lumina.data.sqpack import Header as SqPackHeader, IndexHeader as SqPackIndexHeader
+from lumina.data.sqpack import Header as SqPackHeader, IndexHeader as SqPackIndexHeader, FileType as SqPackFileType, FileInfo as SqPackFileInfo
 
 
 def removeprefix(string: str, prefix: str) -> str:
@@ -32,30 +32,9 @@ class SqPackCatergories(enum.IntEnum):
     DEBUG = 0x13
 
 
-class SqPackFileType(enum.IntEnum):
-    EMPTY = 1
-    STANDARD = 2
-    MODEL = 3
-    TEXTURE = 4
-
-
 class DatBlockType(enum.IntEnum):
     COMPRESSED = 4713
     UNCOMPRESSED = 32000
-
-
-class SqPackFileInfo:  # pylint: disable=too-few-public-methods
-    def __init__(self, data: bytes, offset: int):
-        self.header_size = int.from_bytes(data[0:4], byteorder='little')
-        self.type = SqPackFileType(int.from_bytes(data[4:8], byteorder='little'))
-        self.raw_file_size = int.from_bytes(data[8:12], byteorder='little')
-        self.unknown = [
-            int.from_bytes(data[12:16], byteorder='little'),
-            int.from_bytes(data[16:20], byteorder='little'),
-        ]
-        self.number_of_blocks = int.from_bytes(data[20:24], byteorder='little')
-        self.offset = offset
-
 
 class DatStdFileBlockInfos:  # pylint: disable=too-few-public-methods
     def __init__(self, data: bytes):
@@ -160,9 +139,9 @@ class SqPack:
         file_info_bytes = self.file.read(24)
         file_info = SqPackFileInfo(file_info_bytes, offset)
         data: List[bytes] = []
-        if file_info.type == SqPackFileType.EMPTY:
+        if file_info.type == SqPackFileType.Empty:
             raise DataFileEmpty('File located at 0x' + hex(offset) + ' is empty.')
-        if file_info.type == SqPackFileType.STANDARD:
+        if file_info.type == SqPackFileType.Standard:
             data = self.read_standard_file(file_info)
         else:
             raise SqPackTypeNotImplemented(str(file_info.type))

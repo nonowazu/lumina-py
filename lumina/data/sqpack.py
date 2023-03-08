@@ -1,12 +1,20 @@
 from io import BufferedReader
 from functools import partial
+from enum import IntEnum, auto
 
 from lumina.data.structs import PlatformId
 
+# TODO: remove later once binary reader is in place
 int_from_little = partial(int.from_bytes, byteorder='little')
 
 class HeaderNotSupported(Exception):
     pass
+
+class FileType(IntEnum):
+    Empty = auto()
+    Standard = auto()
+    Model = auto()
+    Texture = auto()
 
 class Header:
     # TODO: replace BufferedReader with a LuminaBinaryReader analogue
@@ -47,3 +55,16 @@ class IndexHeader:
 
     def __repr__(self) -> str:
         return f'<sqpack.IndexHeader size:{self.size}>'
+
+
+class FileInfo:
+    def __init__(self, data: bytes, offset: int):
+        self.size = int_from_little(data[0:4])
+        self.type = FileType(int_from_little(data[4:8]))
+        self.raw_file_size = int_from_little(data[8:12])
+        self.unknown = [
+            int_from_little(data[12:16]),
+            int_from_little(data[16:20]),
+        ]
+        self.number_of_blocks = int_from_little(data[20:24])
+        self.offset = offset
